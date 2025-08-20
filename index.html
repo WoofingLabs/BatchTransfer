@@ -257,10 +257,10 @@
             authorizeFail: ["Woof! Authorization failed, try again, pup!", "Arf! Couldn't approve token, check your wallet!", "Bark! Approval issue, retry!"],
             batchStart: ["Woof! Starting batch transfer, hold tight, pup!", "Arf! Transferring tokens now!", "Bark! Batch transfer in progress!"],
             batchSuccess: ["Woof! Batch transfer completed, pup!", "Arf! Tokens sent successfully!", "Bark! Success! All transfers done!"],
-            batchFail: ["Woof! Batch transfer failed, check inputs, pup!", "Arf! Something went wrong, try again!", "Bark! Transfer hit a snag, retry!"],
-            invalidInput: ["Woof! Invalid input, check address or amounts, pup!", "Arf! Something's not right, check your input!", "Bark! Need valid addresses and amounts!"],
+            batchFail: ["Woof! Batch transfer failed, check inputs or token, pup!", "Arf! Something went wrong, try again!", "Bark! Transfer hit a snag, retry!"],
+            invalidInput: ["Woof! Invalid address or amount, check your input, pup!", "Arf! Something's not right, check your list!", "Bark! Need valid addresses and amounts!"],
             userDenied: ["Woof! You canceled the transaction, pup!", "Arf! Transaction denied, try again when ready!", "Bark! You said no, let's try that again!"],
-            invalidToken: ["Woof! Invalid token address, try another, pup!", "Arf! That token isn't valid, check it!", "Bark! Wrong token address, fix it!"],
+            invalidToken: ["Woof! Token address issue, check and try again, pup!", "Arf! Token problem, verify the address!", "Bark! Token error, please check it!"],
             insufficientBalance: ["Woof! Not enough tokens, check your balance, pup!", "Arf! Token balance too low, top up!", "Bark! Need more tokens to transfer!"],
             insufficientGas: ["Woof! Not enough OKB for gas, pup!", "Arf! Gas funds too low, try again!", "Bark! Need more OKB for gas!"],
             insufficientAllowance: ["Woof! Token not authorized, approve first, pup!", "Arf! Need to authorize token!", "Bark! Approve token before transferring!"]
@@ -354,21 +354,19 @@
             }
             const tokenAddress = document.getElementById('batchTokenAddress').value.trim();
             if (!web3.utils.isAddress(tokenAddress)) {
-                document.getElementById('batchTokenBalance').innerText = 'Balance: Invalid token';
+                document.getElementById('batchTokenBalance').innerText = 'Balance: Enter valid token address';
                 document.getElementById('authorizeBatchButton').disabled = true;
                 document.getElementById('batchTransferButton').disabled = true;
                 return;
             }
             try {
                 tokenContract = new web3.eth.Contract(erc20Abi, web3.utils.toChecksumAddress(tokenAddress));
-                const size = await web3.eth.getCode(tokenAddress);
-                if (size === '0x') throw new Error('Not a contract');
                 const balance = await tokenContract.methods.balanceOf(account).call();
                 document.getElementById('batchTokenBalance').innerText = `Balance: ${Number(web3.utils.fromWei(balance, 'ether')).toLocaleString()}`;
                 await checkAuthorizationStatus();
             } catch (error) {
                 console.error("Token status error:", error);
-                document.getElementById('batchTokenBalance').innerText = 'Balance: Invalid token';
+                document.getElementById('batchTokenBalance').innerText = 'Balance: Check token address';
                 document.getElementById('authorizeBatchButton').disabled = true;
                 document.getElementById('batchTransferButton').disabled = true;
                 document.getElementById('dogMessage').innerText = getRandomMessage('invalidToken');
@@ -453,7 +451,7 @@
                     status.innerText = "Insufficient OKB for gas.";
                     dogMessage.innerText = getRandomMessage('insufficientGas');
                 } else {
-                    status.innerText = "Authorization failed: " + (error.message || "Unknown error");
+                    status.innerText = "Authorization failed, check token address.";
                     dogMessage.innerText = getRandomMessage('authorizeFail');
                 }
             } finally {
@@ -557,8 +555,8 @@
                 } else if (error.message.includes('insufficient funds for gas')) {
                     status.innerText = "Insufficient OKB for gas.";
                     dogMessage.innerText = getRandomMessage('insufficientGas');
-                } else if (error.message.includes('Invalid token address')) {
-                    status.innerText = "Invalid token address.";
+                } else if (error.message.includes('Invalid token address') || error.message.includes('Token address is not a contract')) {
+                    status.innerText = "Check token address and try again.";
                     dogMessage.innerText = getRandomMessage('invalidToken');
                 } else if (error.message.includes('Arrays length mismatch') || error.message.includes('Exceeds max batch size')) {
                     status.innerText = "Invalid input or exceeds 200 addresses.";
